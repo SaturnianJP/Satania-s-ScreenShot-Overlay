@@ -1,7 +1,7 @@
 {
   "name": "net.satania.screenshot-overlay",
   "displayName": "net.satania.screenshot-overlay",
-  "version": "0.0.1",
+  "version": "1.0.6",
   "description": "Describe this Package",
   "dependencies": {},
   "gitDependencies": {},
@@ -13,5 +13,5 @@
   },
   "legacyFolders": {},
   "legacyFiles": {},
-  "localPath": "E:\\git\\test Avatar Proj\\Packages\\net.satania.screenshot-overlay"
+  "localPath": ""
 }
