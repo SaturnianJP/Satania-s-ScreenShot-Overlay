@@ -5,7 +5,7 @@
 2.Add to VCCボタンを押す<br>
 ![image](https://github.com/user-attachments/assets/d28ef2c8-3428-4820-9c27-ce2e39932881)
 
-3.VCC または ALCOMから追加する
+3.[VCC](https://vcc.docs.vrchat.com/) または [ALCOM](https://booth.pm/ja/items/6448396) から追加する
 ![image](https://github.com/user-attachments/assets/1fac81f4-e95c-499b-a451-1501a060035f)
 
 ## 使用方法
