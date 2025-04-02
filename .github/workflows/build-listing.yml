@@ -1,4 +1,4 @@
-name: Satania's ScreenShot Overlay
+name: Build Repo Listing
 
 env:
   listPublishDirectory: Website
