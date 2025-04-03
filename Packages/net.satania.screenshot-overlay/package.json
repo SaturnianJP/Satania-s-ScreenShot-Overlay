@@ -1,9 +1,8 @@
 {
   "name": "net.satania.screenshot-overlay",
   "displayName": "Satania's ScreenShot Overlay",
-  "version": "1.0.6",
-  "description": "An overlay window in the SceneView that can be captured in screenshots.",
-  "dependencies": {},
+  "version": "1.0.7",
+  "description": "Describe this Package",
   "gitDependencies": {},
   "vpmDependencies": {},
   "author": {

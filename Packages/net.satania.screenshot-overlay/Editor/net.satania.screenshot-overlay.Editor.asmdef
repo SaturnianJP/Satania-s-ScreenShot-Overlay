@@ -1,6 +1,6 @@
 {
     "name": "Satania's ScreenShotOverlay",
-    "rootNamespace": "net.satania.screenshot-overlay",
+    "rootNamespace": "net.satania.screenshot_overlay",
     "references": [
         "net.satania.screenshot-overlay"
     ],
