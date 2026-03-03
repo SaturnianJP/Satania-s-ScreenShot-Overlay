@@ -1,8 +1,8 @@
 {
   "name": "net.satania.screenshot-overlay",
   "displayName": "Satania's ScreenShot Overlay",
-  "version": "1.1.1",
-  "description": "Describe this Package",
+  "version": "1.1.2",
+  "description": "Adds a customizable overlay to the Unity Scene View for taking and managing screenshots.",
   "gitDependencies": {},
   "vpmDependencies": {},
   "author": {

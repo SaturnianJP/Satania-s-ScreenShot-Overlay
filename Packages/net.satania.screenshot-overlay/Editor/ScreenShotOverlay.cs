@@ -152,7 +152,10 @@ namespace net.satania.screenshot_overlay
 
             UnityObject.DestroyImmediate(cam.gameObject);
 
-            System.Diagnostics.Process.Start(SaveFolderPath);
+            if (IsOpenFolderWhenSS)
+                System.Diagnostics.Process.Start(SaveFolderPath);
+
+            Debug.Log($"<color=green>[Satania ScreenShot Overlay]</color> Saved ScreenShot!" + $"\n{path}");
         }
 
         private void SaveCamera(int index, SceneView sceneView)
@@ -340,6 +343,10 @@ namespace net.satania.screenshot_overlay
             if (m_AdvancedIsOpened)
             {
                 EditorGUI.indentLevel++;
+                bool openFolder = EditorGUILayout.ToggleLeft("スクショ時にフォルダを開く / OpenFolderWhenShot", IsOpenFolderWhenSS);
+                if (openFolder != IsOpenFolderWhenSS)
+                    IsOpenFolderWhenSS = openFolder;
+
                 bool isCustomSize = EditorGUILayout.ToggleLeft("カスタムサイズ / Custom Resolution", UseCustomSize, GUILayout.Width(200));
                 if (isCustomSize != UseCustomSize)
                     UseCustomSize = isCustomSize;
