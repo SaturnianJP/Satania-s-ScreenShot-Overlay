@@ -30,14 +30,17 @@ namespace net.satania.screenshot_overlay
         const string PARAM_IS_TRANSPARENT = MENU_PATH + "UseTransparent";
         const string PARAM_CUSTOM_X = MENU_PATH + "/Custom_X";
         const string PARAM_CUSTOM_Y = MENU_PATH + "/Custom_Y";
+        const string PARAM_OPEN_FOLDER = MENU_PATH + "/IsOpenFolderWhenSS";
 
         //Camera_Position_0.x;
         const string PARAM_CAMERA_POS = MENU_PATH + "/Camera_Position_{0}.{1}";
         const string PARAM_CAMERA_ROT = MENU_PATH + "/Camera_Rotation_{0}.{1}";
+        const string PARAM_CAMERA_FOV = MENU_PATH + "/Camrera_Fov_{0}";
 
         private const int k_priority = 100;
         private static bool m_ctrlPressed = false;
         private static bool m_rPressed = false;
+        private static bool m_AdvancedIsOpened = false;
 
         /// <summary>
         /// 有効化/無効化の状態を保存する用
@@ -69,10 +72,23 @@ namespace net.satania.screenshot_overlay
             set => EditorPrefs.SetInt(PARAM_CUSTOM_Y, value);
         }
 
+        public bool IsOpenFolderWhenSS
+        {
+            get => EditorPrefs.GetBool(PARAM_OPEN_FOLDER, true);
+            set => EditorPrefs.SetBool(PARAM_OPEN_FOLDER, value);
+        }
+
         private string SaveFolderPath
         {
-            get => EditorPrefs.GetString(PARAM_FOLDERPATH, Application.dataPath);
-            set => EditorPrefs.SetString(PARAM_FOLDERPATH, value);
+            get
+            {
+                var path = EditorUserSettings.GetConfigValue(PARAM_FOLDERPATH);
+                if (!string.IsNullOrEmpty(path))
+                    return path;
+
+                return Application.dataPath;
+            }
+            set => EditorUserSettings.SetConfigValue(PARAM_FOLDERPATH, value);
         }
 
         [PublicAPI]
@@ -85,10 +101,6 @@ namespace net.satania.screenshot_overlay
         private void ScreenShot()
         {
             SceneView sceneView = SceneView.lastActiveSceneView;
-            //string path = EditorUtility.SaveFilePanel("Save PNG", "Assets/", "ScreenShot", "png");
-
-            //if (string.IsNullOrEmpty(path))
-            //    return;
 
             //フォルダがなかった場合は作成
             if (!Directory.Exists(SaveFolderPath))
@@ -134,8 +146,6 @@ namespace net.satania.screenshot_overlay
                 AssetDatabase.ImportAsset(relativePath);
             }
 
-            //EditorUtility.DisplayDialog("Satania's ScreenShot Overlay", $"保存完了\n{path}", "OK");
-
             RenderTexture.active = beforeRT;
             if (rt != null)
                 UnityObject.DestroyImmediate(rt);
@@ -167,6 +177,9 @@ namespace net.satania.screenshot_overlay
                 string key = string.Format(PARAM_CAMERA_ROT, index, xyzw[r]);
                 EditorPrefs.SetFloat(key, r_xyzw[r]);
             }
+
+            float fov = sceneView.cameraSettings.fieldOfView;
+            EditorPrefs.SetFloat(PARAM_CAMERA_FOV, fov);
         }
 
         private void ResetCamera(int index)
@@ -203,10 +216,12 @@ namespace net.satania.screenshot_overlay
                 rotation[r] = EditorPrefs.GetFloat(key, 0);
             }
 
+            float fov = EditorPrefs.GetFloat(PARAM_CAMERA_FOV, 60);
+
             //https://qiita.com/MARQUE/items/c41af003b9300f05e781#gameview-%E3%81%8B%E3%82%89-sceneview
             if (sceneView.camera != null)
             {
-                sceneView.cameraSettings.fieldOfView = sceneView.cameraSettings.fieldOfView;
+                sceneView.cameraSettings.fieldOfView = fov;
                 sceneView.size = sceneView.size;
                 sceneView.pivot = position + rotation * Vector3.forward * sceneView.cameraDistance;
                 sceneView.rotation = rotation;
@@ -321,72 +336,81 @@ namespace net.satania.screenshot_overlay
             if (new_isTransparent != UseTransparent)
                 UseTransparent = new_isTransparent;
 
-            bool isCustomSize = EditorGUILayout.ToggleLeft("カスタムサイズ / Custom Resolution", UseCustomSize, GUILayout.Width(200));
-            if (isCustomSize != UseCustomSize)
-                UseCustomSize = isCustomSize;
-
-            if (isCustomSize)
+            m_AdvancedIsOpened = EditorGUILayout.Foldout(m_AdvancedIsOpened, "詳細設定 / Advanced");
+            if (m_AdvancedIsOpened)
             {
-                int newX = EditorGUILayout.IntField("横 / Width", CustomWidth);
-                int newY = EditorGUILayout.IntField("縦 / Height", CustomHeight);
+                EditorGUI.indentLevel++;
+                bool isCustomSize = EditorGUILayout.ToggleLeft("カスタムサイズ / Custom Resolution", UseCustomSize, GUILayout.Width(200));
+                if (isCustomSize != UseCustomSize)
+                    UseCustomSize = isCustomSize;
 
-                if (newX != CustomWidth)
+                if (isCustomSize)
                 {
-                    CustomWidth = newX;
+                    int newX = EditorGUILayout.IntField("横 / Width", CustomWidth);
+                    int newY = EditorGUILayout.IntField("縦 / Height", CustomHeight);
+
+                    if (newX != CustomWidth)
+                        CustomWidth = newX;
+
+                    if (newY != CustomHeight)
+                        CustomHeight = newY;
+
+                    using (new GUILayout.HorizontalScope())
+                    {
+                        Rect rect = EditorGUI.IndentedRect(
+                            GUILayoutUtility.GetRect(0, 0, GUILayout.MaxWidth(49.5f), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight)));
+                        if (GUI.Button(rect, "FHD"))
+                            SetCustomSize(1920, 1080);
+
+                        rect.x += (49.5f / 2) + (25f / 2);
+                        rect.width = 25f;
+                        if (GUI.Button(rect, "4K"))
+                            SetCustomSize(3840, 2160);
+
+                        rect.x += (25f / 2) + (25f / 2);
+                        rect.width = 25f;
+                        if (GUI.Button(rect, "8K"))
+                            SetCustomSize(7680, 4320);
+                    }
                 }
 
-                if (newY != CustomHeight)
+                using (new GUILayout.VerticalScope(GUI.skin.box))
                 {
-                    CustomHeight = newY;
+                    GUILayout.Label("カメラ位置のプリセット", EditorStyles.boldLabel);
+                    GUILayout.Label("Ctrl押しながら: 保存");
+                    GUILayout.Label("R押しながら: リセット");
+                    GUILayout.BeginHorizontal();
+
+                    for (int i = 0; i < CAMERA_PRESET_LENGTH; i++)
+                    {
+                        bool hasKey = cameraPresetHasKey[i];
+                        var buttonColor = GUI.color;
+
+                        if (hasKey)
+                        {
+                            GUI.color = Color.green;
+                        }
+
+                        if (GUILayout.Button((i + 1).ToString(), GUILayout.Width(30)))
+                        {
+                            if (m_ctrlPressed)
+                                SaveCamera(i, m_sceneView);
+                            else if (m_rPressed)
+                                ResetCamera(i);
+                            else
+                                LoadCamera(i, m_sceneView);
+                        }
+
+                        if (hasKey)
+                        {
+                            GUI.color = buttonColor;
+                        }
+                    }
+                    GUILayout.EndHorizontal();
                 }
-
-                using (new GUILayout.HorizontalScope())
-                {
-                    if (GUILayout.Button("FHD", GUILayout.Width(35)))
-                        SetCustomSize(1920, 1080);
-
-                    if (GUILayout.Button("4K", GUILayout.Width(25)))
-                        SetCustomSize(3840, 2160);
-
-                    if (GUILayout.Button("8K", GUILayout.Width(25)))
-                        SetCustomSize(7680, 4320);
-                }
+                EditorGUI.indentLevel--;
             }
 
-            using (new GUILayout.VerticalScope(GUI.skin.box))
-            {
-                GUILayout.Label("カメラ位置のプリセット", EditorStyles.boldLabel);
-                GUILayout.Label("Ctrl押しながら: 保存");
-                GUILayout.Label("R押しながら: リセット");
-                GUILayout.BeginHorizontal();
-
-                for (int i = 0; i < CAMERA_PRESET_LENGTH; i++)
-                {
-                    bool hasKey = cameraPresetHasKey[i];
-                    var buttonColor = GUI.color;
-
-                    if (hasKey)
-                    {
-                        GUI.color = Color.green;
-                    }
-
-                    if (GUILayout.Button((i + 1).ToString(), GUILayout.Width(30)))
-                    {
-                        if (m_ctrlPressed)
-                            SaveCamera(i, m_sceneView);
-                        else if (m_rPressed)
-                            ResetCamera(i);
-                        else
-                            LoadCamera(i, m_sceneView);
-                    }
-
-                    if (hasKey)
-                    {
-                        GUI.color = buttonColor;
-                    }
-                }
-                GUILayout.EndHorizontal();
-            }
         }
 
         [InitializeOnLoadMethod]
